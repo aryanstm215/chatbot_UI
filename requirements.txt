@@ -1,0 +1,11 @@
+streamlit
+streamlit_chat
+langchain
+langchain_experimental
+python-dotenv
+streamlit_folium
+huggingface_hub
+tensorflow 
+torch
+langchain_google_community
+transformers
