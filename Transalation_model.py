@@ -1,28 +1,29 @@
 import streamlit as st
 from transformers import T5ForConditionalGeneration, T5Tokenizer
 import torch
+from dotenv import load_dotenv
+import os
 
-# Your Hugging Face API key
-HUGGINGFACE_API_KEY = "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"
+load_dotenv()
+HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 
 # Function to load model and tokenizer with API key
 def load_model_and_tokenizer(model_name, api_key):
-    headers = {"Authorization": f"Bearer {api_key}"}
     model = T5ForConditionalGeneration.from_pretrained(model_name, use_auth_token=api_key)
     tokenizer = T5Tokenizer.from_pretrained(model_name, use_auth_token=api_key)
     return model, tokenizer
 
 # Load the T5 model and tokenizer
-model_name = "google-t5/t5-base"
+model_name = "t5-base"
 model, tokenizer = load_model_and_tokenizer(model_name, HUGGINGFACE_API_KEY)
 
 # Function to generate translations
 def translate_text(input_text, target_language):
-    prompt = f"Translate English to {target_language}: {input_text}"
+    prompt = f"translate English to {target_language}: {input_text}"
     inputs = tokenizer.encode(prompt, return_tensors="pt")
-    outputs = model.generate(inputs, max_length=512, num_beams=5, num_return_sequences=3, temperature=1.5)
-    translations = [tokenizer.decode(output, skip_special_tokens=True) for output in outputs]
-    return translations
+    outputs = model.generate(inputs, max_length=512, num_beams=5, num_return_sequences=1, temperature=1.5)
+    translation = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    return translation
 
 # Streamlit UI setup
 st.title("Multilingual Chatbot for Translation")
@@ -34,27 +35,35 @@ if "chat_history" not in st.session_state:
 # Define columns for bot and user
 col1, col2 = st.columns(2)
 
+# Target language selection
+target_language = st.selectbox("Select target language:", ["French", "German", "Spanish", "Italian"], key="target_language")
+
+# Placeholder for user input
+user_input_placeholder = st.empty()
+
+# Unique key for user input
+user_input_key = f"user_input_{len(st.session_state.chat_history)}"
+
 # User input
-with col2:
-    user_input = st.text_input("You:", key="user_input")
+user_input = user_input_placeholder.text_input("You:", key=user_input_key)
 
 # Bot's turn to ask a question
 if user_input:
     # Append user message to chat history
     st.session_state.chat_history.append({"message": user_input, "is_user": True})
 
-    # Get the target language from user input or selection
-    target_language = st.selectbox("Select target language:", ["French", "German", "Spanish", "Italian"], key="target_language")
-
     # Translate the text
-    translations = translate_text(user_input, target_language)
+    translation = translate_text(user_input, target_language.lower())
 
     # Append bot response to chat history
-    for translation in translations:
-        st.session_state.chat_history.append({"message": translation, "is_user": False})
+    st.session_state.chat_history.append({"message": translation, "is_user": False})
+
+    # Clear the input field by reinitializing the placeholder with a new unique key
+    user_input_key = f"user_input_{len(st.session_state.chat_history)}"
+    user_input_placeholder.text_input("You:", value="", key=user_input_key)
 
 # Display chat messages from history on app rerun
-for chat in st.session_state.chat_history:
+for i, chat in enumerate(st.session_state.chat_history):
     if chat["is_user"]:
         with col2:
             st.write(f"You: {chat['message']}")
