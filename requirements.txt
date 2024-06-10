@@ -10,3 +10,4 @@ torch
 langchain_google_community
 transformers
 pymupdf
+gtts
