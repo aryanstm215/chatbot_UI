@@ -25,7 +25,7 @@ response = requests.request(
     'Authorization': 'Bearer pdf_live_waa9XMBcfYXbXMw691daAiRkTueALiGnvTasQFXKRyl'
   },
   files = {
-    'scanned': open('./chinese_docs.pdf', 'rb')
+    'scanned': open('chinese­_docs.pdf', 'rb')
   },
   data = {
     'instructions': json.dumps(instructions)
